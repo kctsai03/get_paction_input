@@ -158,7 +158,8 @@ def get_paction_inputs(k14_output, best_input, mutation, sample_to_pt):
   #
   #
   #
-  num_clusters = 3
+  df_cluster = get_df_cluster(state_tree, k14_output)
+  num_clusters = elbow(df_cluster)
   df_genotype_prop = get_genotype_prop(mutation, sample_to_pt, state_tree, best_input, num_clusters, op, k14_output)
   return df_genotype_prop
 

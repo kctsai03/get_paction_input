@@ -11,7 +11,7 @@ def elbow(df_cluster):
   cluster_matrix = df_cluster[matrix_col].to_numpy()
   cluster_matrix.shape
   data = cluster_matrix
-  num_clusters_to_test = 10
+  num_clusters_to_test = len(df_cluster)
 
   # Generate random data points (assuming you already have the 'data' matrix)
 
