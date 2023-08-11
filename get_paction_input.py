@@ -2,6 +2,9 @@
 #the vaf array has the average vaf for cluster that this mutation belongs to
 from cluster import get_df_cluster, cluster, elbow
 import pandas as pd
+
+#input the state tree, the mutation, the number of clusters, and the decifer output file
+#get the vaf array for that mutation (the CLUSTERED vaf array)
 def get_vaf(state_tree, mutation, num_clusters, k14_output):
   df_cluster = get_df_cluster(state_tree, k14_output)
   df_cluster, cluster_centers = cluster(num_clusters, df_cluster)
@@ -18,8 +21,6 @@ def get_vaf(state_tree, mutation, num_clusters, k14_output):
 #(1,1,0)->(1,1,1);(1,1,0)->(2,2,0);(1,1,0)->(4,0,0)
 #output:
 #[[['1', '1'], ['1', '1']], [['1', '1'], ['2', '2']], [['1', '1'], ['4', '0']]]
-
-
 def parse_state_tree(state_tree_raw):
   state_tree_list = state_tree_raw.split(";")
   state_tree = []
@@ -135,6 +136,8 @@ def get_genotype_prop(mutation, sample_to_pt, state_tree, best_input, num_cluste
   return op
 
 
+#input the decifer output file, the copy number input file (from hatchet), the mutation 
+#returns the dataframe of genotypes and the proportions for each sample
 def get_paction_inputs(k14_output, best_input, mutation, sample_to_pt):
   num_samples = 0
   for col in list(k14_output.columns):
@@ -149,21 +152,15 @@ def get_paction_inputs(k14_output, best_input, mutation, sample_to_pt):
     row[i] = row[i] + str(i)
   op = pd.DataFrame(columns=col)
 
-  state_tree = k14_output[k14_output['mut_index'] == mutation]['state_tree'][0]
+  state_tree = k14_output[k14_output['mut_index'] == mutation]['state_tree'].values[0]
 
-  # NUM CLUSTERS I JUST SET AS 3 FOR NOW --- WHAT TO DO ABOUT THIS??
-  #
-  #
-  #
-  #
-  #
-  #
   df_cluster = get_df_cluster(state_tree, k14_output)
   num_clusters = elbow(df_cluster)
   df_genotype_prop = get_genotype_prop(mutation, sample_to_pt, state_tree, best_input, num_clusters, op, k14_output)
   return df_genotype_prop
 
 #input is k14_output and the mutation
+#returns the dataframe with the edges of the genotype tree for that mutation 
 def get_mut_tree(k14_output, mutation):
   state_tree = parse_state_tree(k14_output[k14_output['mut_index'] == mutation]['state_tree'].values[0])
   col = ['edge_start', 'edge_end']
@@ -179,6 +176,10 @@ def get_mut_tree(k14_output, mutation):
 k14_output = pd.read_csv('/Users/kyletsai/Desktop/SUMMER_2023/decifer/RA17_22_output/MPAM06_output_K14.tsv', sep='\t')
 best_input = pd.read_csv('/Users/kyletsai/Desktop/SUMMER_2023/decifer/RA17_22_input/best.seg.ucn.tsv', sep='\t')
 sample_to_pt = {}
+#sample_to_pt is a dictionary where the key is the sample number and the value is the name of the sample (such as MPAM06PT3). 
+# note for palash: i wasn't sure how to generalize this since there wasn't a very nice way of getting this from the decifer_input file
+# so i just hard coded it - but this is so that the sample we are looking at in the copy number input file matches with the sample 
+# number that we're looking at from the decifer output file
 sample_to_pt[0] = "MPAM06PT3"
 sample_to_pt[1] = "MPAM06PT4"
 sample_to_pt[2] = "MPAM06PT5"

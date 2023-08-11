@@ -5,13 +5,15 @@ from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
 
 import numpy as np
+
+#this function uses elbow method to determine k (number of clusters) and returns the optimal number of cluters
 def elbow(df_cluster):
   matrix_col = list(df_cluster.columns)
   matrix_col.remove('mutations')
   cluster_matrix = df_cluster[matrix_col].to_numpy()
   cluster_matrix.shape
   data = cluster_matrix
-  num_clusters_to_test = len(df_cluster)
+  num_clusters_to_test = min(6, len(df_cluster))
 
   # Generate random data points (assuming you already have the 'data' matrix)
 
@@ -39,6 +41,9 @@ def elbow(df_cluster):
   # plt.xticks(range(1, num_clusters_to_test + 1))
   # plt.show()
   return optimal_num_clusters
+
+#input is the state tree and decifer output file
+#returns the dataframe of all the mutations that have that state tree and the vaf's directly calculated
 def get_df_cluster(state_tree, k14_output):
     col = ["sample" for i in range(9)]
     for i in range(9):
