@@ -66,18 +66,24 @@ def parse_state_tree(state_tree_raw):
 # 3  0.000000  0.000000  0.000000
 # 4  0.233126  0.313493  0.279182
 def get_genotype_prop(mutation, sample_to_pt, state_tree, best_input, num_clusters, op, k14_output):
+  #get the number of samples we have for each mutation
   num_samples = 0
   for col in list(k14_output.columns):
     if "VAR" in col:
       num_samples += 1
 
+  #get the vaf array (clustered)
   vaf = get_vaf(state_tree, mutation, num_clusters, k14_output)
   parsed_tree = parse_state_tree(state_tree)
   genotypes = []
+
+  #create a list of all the genotypes seen in the genotype tree
   for edge in parsed_tree:
     for i in range(2):
       if edge[i] not in genotypes:
         genotypes.append(edge[i])
+
+  #figure out what x*, y*, and m* are for (x*, y*, and m*)
   for i in range(len(genotypes)):
     for j in range(i, len(genotypes)):
       if genotypes[i][0] == genotypes[j][0] and genotypes[i][1] == genotypes[j][1] and i != j:
@@ -85,6 +91,7 @@ def get_genotype_prop(mutation, sample_to_pt, state_tree, best_input, num_cluste
         y_star = genotypes[i][1]
         m_star = genotypes[j][2]
 
+  #locate the mutation in the copy number file
   chr_number = int(mutation.split('.')[0])
   chr_position = int(mutation.split('.')[1])
   #chr_x is the tsv file where chromosome number = x
@@ -92,9 +99,11 @@ def get_genotype_prop(mutation, sample_to_pt, state_tree, best_input, num_cluste
   #row_numbers will be the row index of the mutation bin for 52573509 (837-845)
   row_numbers = list(chr_x[(chr_x['START'] < chr_position) & (chr_x['END'] > chr_position)].index)
 
+  #for each of the genotypes, add the inferred proportions
   for g in genotypes:
     geno = g[0] + "|" + g[1] + "|" + g[2]
     new_insert = [geno]
+    #for each sample, we figure out the proportions of each copy number and calculate the genotype proportions according to the formula
     for index in range(num_samples):
       sample_name = sample_to_pt[index]  #sample name for i = 0 is PT3
       rows = best_input['SAMPLE'][row_numbers]
@@ -123,7 +132,9 @@ def get_genotype_prop(mutation, sample_to_pt, state_tree, best_input, num_cluste
       if miu_star != 0:
         lm = 1/(int(m_star)*miu_star) * (vaf[index]*f-sigma)
 
+
       if g[0] == x_star and g[1] == y_star:
+        #if the proportion of copy number is 0, then we append 0 (avoid divide by 0 error)
         if miu_star == 0:
           new_insert.append(0)
         elif g[2] == '0':
